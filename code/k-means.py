@@ -22,11 +22,12 @@ class Kmeans:
     K-Means clustering implementation
     """
 
-    def __init__(self, data):
+    def __init__(self, data, ground_truth):
         self.init_centroids = None
         self.centroids = None
         self.data = data
-        self.clusters = np.zeros((self.data, 1))
+        self.clusters = np.zeros((self.data.shape[0], 1), dtype=int)
+        self.ground_truth_clusters = ground_truth
 
     def initial_random_centroids(self, num):
         """
@@ -57,6 +58,34 @@ class Kmeans:
 
         return distance_matrix
 
+    def assign_clusters(self, distance_matrix):
+        """Assign Objects to clusters with minimum distance to centroid"""
+        self.clusters = np.argmin(distance_matrix, axis=1)
+        return
+
+    def compute_centroids(self):
+        new_centroids = np.zeros(self.centroids.shape, dtype=float)
+        # horizontally_merged_array = np.hstack((1D_array[:, np.newaxis], 2D_array))
+        for i in range(new_centroids.shape[0]):
+            idx = np.where(self.clusters == i)
+            new_centroids[i] = np.mean(self.data[idx[0]], axis=0)
+        return new_centroids
+
+    def kmeans_algorithm(self):
+
+        # make sure initial centroids are set
+
+        while True:
+            distance_matrix = self.distance_from_centroids()
+            self.assign_clusters(distance_matrix)
+            new_centroids = self.compute_centroids()
+
+            if np.array_equal(self.centroids, new_centroids):
+                break
+            else:
+                self.centroids = new_centroids
+
+        return
 
 
 
@@ -64,9 +93,10 @@ def main():
     dataset1 = Import(r'../data/cho.txt', 'TAB')
     dataset2 = Import(r'../data/iyer.txt', 'TAB')
 
-    km1 = Kmeans(dataset1.data[:, 2:])
+    km1 = Kmeans(dataset1.data[:, 2:], dataset1.data[:, 1])
     ic1 = km1.initial_random_centroids(5)
-    km1.distance_from_centroids()
+    km1.kmeans_algorithm()
+    
 
     return
 
