@@ -15,3 +15,6 @@ class Import:
 
     def import_tab_file(self, tabfile):
         self.data = np.genfromtxt(tabfile, dtype = float, delimeter = '\t')
+
+if __name__ == "__main__":
+    main()
