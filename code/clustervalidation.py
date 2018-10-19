@@ -1,5 +1,7 @@
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from mpl_toolkits.mplot3d import Axes3D
 
 
 class ExternalIndex:
@@ -52,9 +54,19 @@ class Visualization:
         self.clusters = clusters
         self.ground = groundtruth
 
-    def principal_component_analysis(self):
-        pass
+    def principal_component_analysis(self, dim):
+        pca = PCA(n_components=dim)
+        pca.fit(self.data)
+        return pca.components_
 
-    def plot(self):
-        pass
+    def plot(self, dimensions):
+        components = self.principal_component_analysis(dimensions)
+        if dimensions == 2:
+            plt.scatter(components[0], components[1], c=self.clusters, edgecolors='black')
+        elif dimensions == 3:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+            ax.scatter(components[0], components[1], components[2], c=self.clusters, edgecolors='black')
+        plt.grid()
+        plt.show()
 
