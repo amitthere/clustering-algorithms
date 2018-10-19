@@ -1,4 +1,5 @@
 import numpy as np
+from clustervalidation import ExternalIndex, Visualization
 
 class Import:
     """
@@ -27,7 +28,7 @@ class Kmeans:
         self.centroids = None
         self.data = data
         self.clusters = np.zeros((self.data.shape[0], 1), dtype=int)
-        self.ground_truth_clusters = ground_truth
+        self.ground_truth_clusters = ground_truth.astype('int')
 
     def initial_random_centroids(self, num):
         """
@@ -60,14 +61,15 @@ class Kmeans:
 
     def assign_clusters(self, distance_matrix):
         """Assign Objects to clusters with minimum distance to centroid"""
-        self.clusters = np.argmin(distance_matrix, axis=1)
-        return
+        clusters = np.argmin(distance_matrix, axis=1)
+        return clusters
 
-    def compute_centroids(self):
+    def compute_centroids(self, clusters):
+        """Compute new centroids from objects assigned to clusters"""
         new_centroids = np.zeros(self.centroids.shape, dtype=float)
         # horizontally_merged_array = np.hstack((1D_array[:, np.newaxis], 2D_array))
         for i in range(new_centroids.shape[0]):
-            idx = np.where(self.clusters == i)
+            idx = np.where(clusters == i)
             new_centroids[i] = np.mean(self.data[idx[0]], axis=0)
         return new_centroids
 
@@ -77,16 +79,24 @@ class Kmeans:
 
         while True:
             distance_matrix = self.distance_from_centroids()
-            self.assign_clusters(distance_matrix)
-            new_centroids = self.compute_centroids()
+            clusters = self.assign_clusters(distance_matrix)
+            new_centroids = self.compute_centroids(clusters)
 
-            if np.array_equal(self.centroids, new_centroids):
+            # check if clusters are same, NOT the centroids
+            if np.array_equal(self.clusters, clusters):
                 break
             else:
                 self.centroids = new_centroids
+                self.clusters = clusters
 
+        self.clusters = self.clusters + 1
         return
 
+    # def cluster_validation(self):
+    #     """Returns the number of objects matching the ground truth clusters"""
+    #     clusters = self.clusters + 1
+    #     ground_truth_clusters = self.ground_truth_clusters
+    #     return np.sum(clusters == ground_truth_clusters)
 
 
 def main():
@@ -94,9 +104,19 @@ def main():
     dataset2 = Import(r'../data/iyer.txt', 'TAB')
 
     km1 = Kmeans(dataset1.data[:, 2:], dataset1.data[:, 1])
-    ic1 = km1.initial_random_centroids(5)
+    # ic1 = km1.initial_random_centroids(5)
+
+    km1.centroids = km1.init_centroids = np.loadtxt(r'../log/cho_ground_centroids.txt')
+
     km1.kmeans_algorithm()
-    
+
+    extr_index_valid = ExternalIndex(km1.ground_truth_clusters, km1.clusters)
+    print('Rand Index on Cho dataset clusters :', extr_index_valid.rand_index())
+    print('Jaccard Coefficient on Cho dataset clusters :', extr_index_valid.jaccard_coefficient())
+
+
+    # gene_cluster_matched = km1.cluster_validation()
+    # print('Genes that matched in clusters: ', gene_cluster_matched)
 
     return
 
