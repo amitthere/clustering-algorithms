@@ -1,5 +1,10 @@
 import numpy as np
 from clustervalidation import ExternalIndex, Visualization
+from sklearn.decomposition import PCA
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import time
 
 class Import:
     """
@@ -76,8 +81,12 @@ class Kmeans:
     def kmeans_algorithm(self):
 
         # make sure initial centroids are set
+        pca = PCA(n_components=2)
+        pca.fit(self.data.T)
 
         while True:
+            self.log_iterations_of_kmeans(pca.components_, self.clusters)
+
             distance_matrix = self.distance_from_centroids()
             clusters = self.assign_clusters(distance_matrix)
             new_centroids = self.compute_centroids(clusters)
@@ -92,27 +101,40 @@ class Kmeans:
         self.clusters = self.clusters + 1
         return
 
-    # def cluster_validation(self):
-    #     """Returns the number of objects matching the ground truth clusters"""
-    #     clusters = self.clusters + 1
-    #     ground_truth_clusters = self.ground_truth_clusters
-    #     return np.sum(clusters == ground_truth_clusters)
-
+    def log_iterations_of_kmeans(self, components, clusters):
+        if clusters.ndim == 1:
+            clusters = clusters[:, None]
+            clusters = clusters.T
+        else:
+            clusters = clusters.T
+        centroids = np.zeros((2,5), dtype=float)
+        centroid_cluster = np.ones((1,5), dtype=int)
+        centroid_cluster.fill(6)
+        for i in range(centroids.shape[1]):
+            idx = np.where(clusters == i)
+            centroids[:, i] = np.mean(components[:, idx[0]], axis=1)
+        points = np.hstack((components, centroids))
+        categories = np.hstack((clusters, centroid_cluster))
+        matplotlib.use('Agg')  # forces python to not use xwindow to display the plot in separate window
+        plt.scatter(points[0], points[1], c=np.squeeze(categories), edgecolors='black')
+        # plt.grid()
+        plt.savefig(r'../log/k-means-iteration-'+str(time.time())+'.jpg')
+        return
 
 def main():
     dataset1 = Import(r'../data/cho.txt', 'TAB')
     dataset2 = Import(r'../data/iyer.txt', 'TAB')
 
     km1 = Kmeans(dataset1.data[:, 2:], dataset1.data[:, 1])
-    # ic1 = km1.initial_random_centroids(5)
 
-    km1.centroids = km1.init_centroids = np.loadtxt(r'../log/cho_ground_centroids.txt')
+    ic1 = km1.initial_random_centroids(5)
+    # km1.centroids = km1.init_centroids = np.loadtxt(r'../log/cho_ground_centroids.txt')
 
     km1.kmeans_algorithm()
 
-    extr_index_valid = ExternalIndex(km1.ground_truth_clusters, km1.clusters)
-    print('Rand Index on Cho dataset clusters :', extr_index_valid.rand_index())
-    print('Jaccard Coefficient on Cho dataset clusters :', extr_index_valid.jaccard_coefficient())
+    extr_index_validation = ExternalIndex(km1.ground_truth_clusters, km1.clusters)
+    print('Rand Index on Cho dataset clusters :', extr_index_validation.rand_index())
+    print('Jaccard Coefficient on Cho dataset clusters :', extr_index_validation.jaccard_coefficient())
 
 
     # gene_cluster_matched = km1.cluster_validation()
