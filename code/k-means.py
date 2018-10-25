@@ -1,8 +1,8 @@
 import numpy as np
-from clustervalidation import ExternalIndex, Visualization
-from sklearn.decomposition import PCA
 import matplotlib
 matplotlib.use('Agg')
+from clustervalidation import ExternalIndex, Visualization
+from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import time
 
@@ -78,14 +78,20 @@ class Kmeans:
             new_centroids[i] = np.mean(self.data[idx[0]], axis=0)
         return new_centroids
 
-    def kmeans_algorithm(self):
-
+    def kmeans_algorithm(self, log=False):
+        """
+        Performs K-Means clustering based on set initial centroids
+        :param log: set to True if 2D plot of each iteration is required
+        :return:
+        """
         # make sure initial centroids are set
-        pca = PCA(n_components=2)
-        pca.fit(self.data.T)
+        if log:
+            pca = PCA(n_components=2)
+            pca.fit(self.data.T)
 
         while True:
-            self.log_iterations_of_kmeans(pca.components_, self.clusters)
+            if log:
+                self.log_iterations_of_kmeans(pca.components_, self.clusters)
 
             distance_matrix = self.distance_from_centroids()
             clusters = self.assign_clusters(distance_matrix)
@@ -116,9 +122,11 @@ class Kmeans:
         points = np.hstack((components, centroids))
         categories = np.hstack((clusters, centroid_cluster))
         matplotlib.use('Agg')  # forces python to not use xwindow to display the plot in separate window
-        plt.scatter(points[0], points[1], c=np.squeeze(categories), edgecolors='black')
+        # plt.figure(num=None, figsize=(15, 12), dpi=80, facecolor='w', edgecolor='k')
+        plt.scatter(points[0], points[1], c=np.squeeze(categories), edgecolors='black', cmap='tab10')
         # plt.grid()
         plt.savefig(r'../log/k-means-iteration-'+str(time.time())+'.jpg')
+        plt.close()
         return
 
 def main():
@@ -126,15 +134,23 @@ def main():
     dataset2 = Import(r'../data/iyer.txt', 'TAB')
 
     km1 = Kmeans(dataset1.data[:, 2:], dataset1.data[:, 1])
+    km2 = Kmeans(dataset2.data[:, 2:], dataset2.data[:, 1])
 
     ic1 = km1.initial_random_centroids(5)
+    ic2 = km2.initial_random_centroids(10)
     # km1.centroids = km1.init_centroids = np.loadtxt(r'../log/cho_ground_centroids.txt')
 
     km1.kmeans_algorithm()
+    km2.kmeans_algorithm()
 
-    extr_index_validation = ExternalIndex(km1.ground_truth_clusters, km1.clusters)
-    print('Rand Index on Cho dataset clusters :', extr_index_validation.rand_index())
-    print('Jaccard Coefficient on Cho dataset clusters :', extr_index_validation.jaccard_coefficient())
+    extr_index_validation1 = ExternalIndex(km1.ground_truth_clusters, km1.clusters)
+    extr_index_validation2 = ExternalIndex(km2.ground_truth_clusters, km2.clusters)
+
+    print('Rand Index on Cho dataset clusters :', extr_index_validation1.rand_index())
+    print('Jaccard Coefficient on Cho dataset clusters :', extr_index_validation1.jaccard_coefficient())
+
+    print('Rand Index on Iyer dataset clusters :', extr_index_validation2.rand_index())
+    print('Jaccard Coefficient on Iyer dataset clusters :', extr_index_validation2.jaccard_coefficient())
 
 
     # gene_cluster_matched = km1.cluster_validation()
