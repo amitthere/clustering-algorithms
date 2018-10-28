@@ -42,6 +42,8 @@ def main():
     data = input[input.shape[0] - clusters, :]
     centroids = input[:-clusters, :]
     mapper = Map(data, centroids)
+    mapper.map()
+    return
 
 
 if __name__ == "__main__":
