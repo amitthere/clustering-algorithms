@@ -1,6 +1,7 @@
 
 import numpy as np
 import configparser
+import map, reduce
 
 
 class Import:
@@ -22,7 +23,7 @@ class Import:
 
 class MapReduceKMeans:
     """
-    K-Means clustering implementation in Map Reduce
+    Map Reduce K-Means clustering implementation
     """
     def __init__(self, data):
         self.data = data
