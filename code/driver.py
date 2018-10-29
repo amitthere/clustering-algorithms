@@ -2,7 +2,6 @@
 import os
 import numpy as np
 import configparser
-import map, reduce
 
 
 class Import:
@@ -31,6 +30,7 @@ class MapReduceKMeans:
         self.data = data
         self.init_centroids = None
         self.centroids = None
+        self.ClusterCount = clusters
         self.clusters = np.random.randint(clusters, size=(data.shape[0], 1))
         self.ground_truth_clusters = ground_truth.astype('int')
 
@@ -61,7 +61,8 @@ class MapReduceKMeans:
         reducer = '/home/hadoop/Documents/601/reduce.py'
         hdfs_input = '/KMInput'
         hdfs_output = '/KMOutput'
-        job = streaming_cmd + ' -mapper ' + mapper + ' -reducer ' + reducer + ' -input ' + hdfs_input + ' -output ' + hdfs_output
+        job = streaming_cmd + ' -mapper ' + mapper + ' -reducer ' + reducer + ' -cmdenv ClusterCount=' \
+              + str(self.clusters) + ' -input ' + hdfs_input + ' -output ' + hdfs_output
         return job
 
     def kmeans(self):
@@ -97,6 +98,7 @@ def main():
 
     mrkm.kmeans()
 
+    return
 
 
 if __name__ == "__main__":
