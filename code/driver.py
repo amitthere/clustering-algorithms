@@ -61,8 +61,8 @@ class MapReduceKMeans:
         reducer = '/home/hadoop/Documents/601/reduce.py'
         hdfs_input = '/KMInput'
         hdfs_output = '/KMOutput'
-        job = streaming_cmd + ' -mapper ' + mapper + ' -reducer ' + reducer + ' -cmdenv ClusterCount=' \
-              + str(self.clusters) + ' -input ' + hdfs_input + ' -output ' + hdfs_output
+        job = streaming_cmd + ' -files ' + mapper + ',' + reducer + ' -mapper ' + mapper + ' -reducer ' + reducer + \
+              ' -cmdenv ClusterCount=' + str(self.ClusterCount) + ' -input ' + hdfs_input + ' -output ' + hdfs_output
         return job
 
     def kmeans(self):
@@ -70,6 +70,7 @@ class MapReduceKMeans:
         prev_clusters = self.clusters
         while True:
 
+            os.system('hadoop fs -rm -R /KMOutput')
             # run one iteration of MR
             os.system(self.map_reduce_cmd('', '', '', ''))
 
@@ -94,7 +95,7 @@ def main():
         mrkm.initial_random_centroids(config['DEFAULT']['ClusterCount'])
     else:
         indices = config['DEFAULT']['Centroids']
-        mrkm.initial_centroids([int(i) for i in indices])
+        mrkm.initial_centroids([int(i) for i in indices.split(',')])
 
     mrkm.kmeans()
 
