@@ -3,3 +3,6 @@
 
 ### Project Logs ###
 log/
+
+### pycache ###
+code/__pycache__

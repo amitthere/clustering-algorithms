@@ -28,10 +28,11 @@ class Kmeans:
     K-Means clustering implementation
     """
 
-    def __init__(self, data, ground_truth):
+    def __init__(self, data, ground_truth, cluster_count):
         self.init_centroids = None
         self.centroids = None
         self.data = data
+        self.cluster_count = cluster_count
         self.clusters = np.zeros((self.data.shape[0], 1), dtype=int)
         self.ground_truth_clusters = ground_truth.astype('int')
 
@@ -45,6 +46,12 @@ class Kmeans:
         self.init_centroids = self.data[centroid_indices]
         self.centroids = self.init_centroids
         return centroid_indices
+
+    def initial_centroids(self, *args):
+        point_indices = [i-1 for i in args]
+        self.init_centroids = self.data[point_indices]
+        self.centroids = self.init_centroids
+        return point_indices
 
     def euclidean_distance(self, objSet, obj):
         """Euclidean distance between set of objects and single object"""
@@ -85,6 +92,9 @@ class Kmeans:
         :return:
         """
         # make sure initial centroids are set
+        if self.centroids.all() == None:
+            self.initial_random_centroids(self.cluster_count)
+
         if log:
             pca = PCA(n_components=2)
             pca.fit(self.data.T)
@@ -133,9 +143,10 @@ def main():
     dataset1 = Import(r'../data/cho.txt', 'TAB')
     dataset2 = Import(r'../data/iyer.txt', 'TAB')
 
-    km1 = Kmeans(dataset1.data[:, 2:], dataset1.data[:, 1])
-    km2 = Kmeans(dataset2.data[:, 2:], dataset2.data[:, 1])
+    km1 = Kmeans(dataset1.data[:, 2:], dataset1.data[:, 1], 5)
+    km2 = Kmeans(dataset2.data[:, 2:], dataset2.data[:, 1], 10)
 
+    #ic1 = km1.initial_centroids(3, 5, 9, 12, 89)
     ic1 = km1.initial_random_centroids(5)
     ic2 = km2.initial_random_centroids(10)
     # km1.centroids = km1.init_centroids = np.loadtxt(r'../log/cho_ground_centroids.txt')
@@ -146,12 +157,16 @@ def main():
     extr_index_validation1 = ExternalIndex(km1.ground_truth_clusters, km1.clusters)
     extr_index_validation2 = ExternalIndex(km2.ground_truth_clusters, km2.clusters)
 
-    print('Rand Index on Cho dataset clusters :', extr_index_validation1.rand_index())
+    print('Rand Index on dataset1 clusters :', extr_index_validation1.rand_index())
     print('Jaccard Coefficient on Cho dataset clusters :', extr_index_validation1.jaccard_coefficient())
 
-    print('Rand Index on Iyer dataset clusters :', extr_index_validation2.rand_index())
+    print('Rand Index on dataset2 clusters :', extr_index_validation2.rand_index())
     print('Jaccard Coefficient on Iyer dataset clusters :', extr_index_validation2.jaccard_coefficient())
 
+    plot1 = Visualization(dataset1.data[:, 2:], km1.clusters, dataset1.data[:, 1])
+    plot2 = Visualization(dataset2.data[:, 2:], km2.clusters, dataset2.data[:, 1])
+    plot1.plot(r'../log/cho1.jpg')
+    plot2.plot(r'../log/iyer1.jpg')
 
     # gene_cluster_matched = km1.cluster_validation()
     # print('Genes that matched in clusters: ', gene_cluster_matched)

@@ -60,6 +60,8 @@ class Visualization:
 
     def plot(self, filename):
         components = self.principal_component_analysis(2)
+        classes = ['Cluster-' + str(i) for i in np.unique(self.clusters)]
+        #plt.legend(loc=4)
         plt.scatter(components[0], components[1], c=self.clusters, edgecolors='black')
         plt.grid()
         plt.savefig(filename)
