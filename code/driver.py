@@ -122,6 +122,25 @@ class MapReduceKMeans:
         self.centroids = self.init_centroids
         return indices
 
+    def centroid_distance(self, centroid):
+        """ Euclidean distance implemented to calculate distance of each object in dataset from given centroid """
+        return np.sqrt(np.sum(np.square(self.data - centroid), axis=1))
+
+    def distance_from_centroids(self):
+        rows = self.data.shape[0]
+        cols = self.centroids.shape[0]
+        distance_matrix = np.zeros((rows, cols), dtype=float)
+
+        for index, centroid in enumerate(self.centroids):
+            distance_matrix[:, index] = self.centroid_distance(centroid)
+
+        return distance_matrix
+
+    def assign_clusters(self, distance_matrix):
+        """Assign Objects to clusters with minimum distance to centroid"""
+        clusters = np.argmin(distance_matrix, axis=1)
+        return clusters
+
     def map_reduce_cmd(self, mapper, reducer, hdfs_input, hdfs_output):
         streaming_cmd = 'hadoop jar /home/hadoop/hadoop/share/hadoop/tools/lib/hadoop-streaming-2.6.4.jar'
         mapsandreduces = ' -D mapreduce.job.maps=1 -D mapreduce.job.reduces=1 '
@@ -172,6 +191,7 @@ class MapReduceKMeans:
                 prev_centroids = self.centroids
 
         # Algorithm has converged
+        self.clusters = self.assign_clusters(self.distance_from_centroids())
         return
 
 
@@ -191,9 +211,12 @@ def main():
 
     mrkm.kmeans()
 
-    # use mrkm.centroids to assign cluster
-    # use ground truth and clusters to calculate rand and jaccard index
-    # plot the PCA
+    ei = ExternalIndex(mrkm.ground_truth_clusters, mrkm.clusters)
+    print('Rand Index : ', ei.rand_index())
+    print('Jaccard Coefficient : ', ei.jaccard_coefficient())
+
+    visual = Visualization(mrkm.data, mrkm.clusters, mrkm.ground_truth_clusters)
+    visual.plot('demo.jpg')
 
     return
 
