@@ -21,15 +21,14 @@ class Reducer:
             new_centroids[i] = np.mean(data[idx[0]], axis=0)
         return new_centroids
 
-    def emit_output(self, centroids):
+    def emit_output(self):
         tc = np.zeros((self.centroids.shape[0], 2 + self.centroids.shape[1]), dtype=float)
         cc = np.arange(self.centroids.shape[0], dtype=int)
         tc[:, 0] = cc
         tc[:, 1] = -1
         tc[:, 2:] = self.centroids
-        output = np.vstack((self.data, tc))
 
-        for i in output:
+        for i in tc:
             print(str(i[0]) + '\t' + str(i[1]) + '\t' + ','.join(str(x) for x in i[2:]))
         return
 
