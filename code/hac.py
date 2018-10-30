@@ -22,6 +22,48 @@ class Import:
     def import_tab_file(self, tabfile):
         self.data = np.genfromtxt(tabfile, dtype = float, delimiter = '\t')
 
+class ExternalIndex:
+
+    def __init__(self, groundtruth, clusters):
+        self.ground = groundtruth
+        self.clusters = clusters
+        self.ground_incidence_matrix = self.incidence_matrix(self.ground)
+        self.cluster_incidence_matrix = self.incidence_matrix(self.clusters)
+        self.M11, self.M00, self.M10, self.M01 \
+            = self.categories(self.ground_incidence_matrix, self.cluster_incidence_matrix)
+
+    def incidence_matrix(self, clusters):
+        N = clusters.shape[0]
+        matrix = np.zeros((N, N), dtype='int')
+
+        for i in range(clusters.shape[0]):
+            for j in range(i + 1, clusters.shape[0]):
+                if (clusters[i] == clusters[j]) and (clusters[i] != -1 or clusters[j] != -1):
+                    matrix[i][j] = matrix[j][i] = 1
+        return matrix
+
+    def categories(self, ground_incidence_matrix, cluster_incidence_matrix):
+        M11 = M00 = M10 = M01 = 0
+        for i in range(cluster_incidence_matrix.shape[0]):
+            for j in range(cluster_incidence_matrix.shape[0]):
+                if cluster_incidence_matrix[i][j] == ground_incidence_matrix[i][j] == 1:
+                    M11 = M11 + 1
+                elif cluster_incidence_matrix[i][j] == ground_incidence_matrix[i][j] == 0:
+                    M00 = M00 + 1
+                elif cluster_incidence_matrix[i][j] == 1 and ground_incidence_matrix[i][j] == 0:
+                    M10 = M10 + 1
+                elif cluster_incidence_matrix[i][j] == 0 and ground_incidence_matrix[i][j] == 1:
+                    M01 = M01 + 1
+        return M11, M00, M10, M01
+
+    def rand_index(self):
+        rand_index = float(self.M11 + self.M00)/float(self.M11 + self.M00 + self.M10 + self.M01)
+        return rand_index
+
+    def jaccard_coefficient(self):
+        jaccard_coefficient = float(self.M11) / float(self.M11 + self.M10 + self.M01)
+        return jaccard_coefficient
+
 
 def eucli_dis(data):
     distance_matrix = euclidean_distances(data, data)
@@ -60,33 +102,6 @@ def clusters(disMat, dis_r, dis_c, x, y, number_of_clusters):
         print("Distance Matrix")
         print(disMat)
 
-def rand_jaccard(labels, calculated):
-
-    labelMatrix = np.zeros((labels.shape[0], labels.shape[0]))
-    calculatedMatrix = np.zeros((labels.shape[0], labels.shape[0]))
-    for  i in range(labels.shape[0]):
-        for j in range(labels.shape[0]):
-            if(np.array_equal(labels[i], labels[j])):
-                labelMatrix[i][j] = 1
-            if(np.array_equal(calculated[i], calculated[j])):
-                calculatedMatrix[i][j] = 1
-    M11 = M00 = M10 = M01 = 0
-    for i in range(calculatedMatrix.shape[0]):
-        for j in range(calculatedMatrix.shape[0]):
-            if calculatedMatrix[i][j] == labelMatrix[i][j] == 1:
-                M11 = M11 + 1
-            elif calculatedMatrix[i][j] == labelMatrix[i][j] == 0:
-                M00 = M00 + 1
-            elif calculatedMatrix[i][j] == 1 and labelMatrix[i][j] == 0:
-                M10 = M10 + 1
-            elif calculatedMatrix[i][j] == 0 and labelMatrix[i][j] == 1:
-                M01 = M01 + 1
-    rand_index = float(M11 + M00)/float(M11 + M00 + M10 + M01)
-    jaccard_coefficient = float(M11)/float(M11 + M10 + M01)
-    print('Rand Coefficient = ', rand_index)
-    print('Jaccard Coefficient = ', jaccard_coefficient)
-
-
 def principal_component_analysis(data, labels):
     pca_data = PCA(n_components=2).fit_transform(data)
     plotPCA(pca_data, labels)
@@ -99,15 +114,15 @@ def plotPCA(pcaComponents, labels):
     plot = scatter.get_figure()
     plt.xlabel('Component 1')
     plt.ylabel('Component 2')
-    plt.title('Principal component analysis plot on Cho.txt with 5 clusters')
+    plt.title('Principal component analysis plot on Cho.txt with 10 clusters')
     plt.legend()
     plt.show()
     #plot.savefig('../Plots/HAC_CHO_PCA.png')
 
 def main():
     sys.setrecursionlimit(1500)
-    file = Import('../data/cho.txt', "TAB")
-    number_of_clusters = 5
+    file = Import('../data/iyer.txt', "TAB")
+    number_of_clusters = 10
     file0 = file.data
     gene_id = file0[:, 0]
     final = len(gene_id)
@@ -133,7 +148,10 @@ def main():
     #print(list)
     length = len(list)
     #print(length)
-    rand_jaccard(ground_truth_label, list)
+    rand = ExternalIndex(ground_truth_label, list)
+    jaccard = ExternalIndex(ground_truth_label, list)
+    print('Rand index= ', rand.rand_index())
+    print('Jaccard coefficient= ', jaccard.jaccard_coefficient())
     principal_component_analysis(gene_data, list)
 
 if __name__ == "__main__":
