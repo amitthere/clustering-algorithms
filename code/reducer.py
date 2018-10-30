@@ -22,8 +22,15 @@ class Reducer:
         return new_centroids
 
     def emit_output(self, centroids):
-        for i, centroid in enumerate(centroids):
-            print(str(i) + '\t' + ','.join(str(x) for x in centroid))
+        tc = np.zeros((self.centroids.shape[0], 2 + self.centroids.shape[1]), dtype=float)
+        cc = np.arange(self.centroids.shape[0], dtype=int)
+        tc[:, 0] = cc
+        tc[:, 1] = -1
+        tc[:, 2:] = self.centroids
+        output = np.vstack((self.data, tc))
+
+        for i in output:
+            print(str(i[0]) + '\t' + str(i[1]) + '\t' + ','.join(str(x) for x in i[2:]))
         return
 
     def reduce(self):
@@ -34,10 +41,10 @@ class Reducer:
             cluster, id, serialized_row = line.split('\t')
             datapoint = np.fromstring(serialized_row, dtype='float', sep=',')
 
-            row = np.zeros((1, 2+datapoint.shape[1]), dtype=float)
-            row[0] = int(cluster)
-            row[1] = int(id)
-            row[2:] = datapoint
+            row = np.zeros((1, 2 + datapoint.shape[0]), dtype=float)
+            row[0][0] = int(cluster)
+            row[0][1] = int(id)
+            row[0][2:] = datapoint
             data_list.append(row)
 
         data = np.vstack(tuple(data_list))
@@ -49,7 +56,6 @@ class Reducer:
 
         self.emit_output(centroids)
         return
-
 
 
 def main():
