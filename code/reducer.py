@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 
-class Reduce:
+class Reducer:
 
     def __init__(self):
         self.data = None
@@ -53,7 +53,7 @@ class Reduce:
 
 
 def main():
-    reducer = Reduce()
+    reducer = Reducer()
     reducer.reduce()
     pass
 

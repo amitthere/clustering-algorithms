@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 
-class Map:
+class Mapper:
 
     def __init__(self, data, centroids):
         self.data = data
@@ -13,7 +13,7 @@ class Map:
 
     def centroid_distance(self, point, centroid):
         """ Euclidean distance implemented to calculate distance of each object in dataset from given centroid """
-        return np.sqrt(np.sum(np.square(point - centroid), axis=1))
+        return np.sqrt(np.sum(np.square(point - centroid), axis=0))
 
     def distance_from_centroids(self, point):
         rows = 1
@@ -27,13 +27,13 @@ class Map:
 
     def assign_clusters(self, distance_matrix):
         """Assign Objects to clusters with minimum distance to centroid"""
-        clusters = np.argmin(distance_matrix, axis=1)
+        clusters = np.argmin(distance_matrix)
         return clusters
 
     def map(self):
         for id, row in enumerate(self.data):
             serialized_row = ','.join(str(x) for x in row)
-            cluster = self.assign_clusters(self.distance_from_centroids(row))[0]
+            cluster = self.assign_clusters(self.distance_from_centroids(row))
             print(str(cluster) + '\t' + str(id) + '\t' + serialized_row)
         return
 
@@ -43,7 +43,7 @@ def main():
     clusters = int(os.environ['ClustersCount'])
     data = input[:input.shape[0] - clusters, :]
     centroids = input[input.shape[0] - clusters:, :]
-    mapper = Map(data, centroids)
+    mapper = Mapper(data, centroids)
     mapper.map()
     return
 
