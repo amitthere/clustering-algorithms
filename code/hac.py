@@ -22,19 +22,6 @@ class Import:
     def import_tab_file(self, tabfile):
         self.data = np.genfromtxt(tabfile, dtype = float, delimiter = '\t')
 
-sys.setrecursionlimit(1500)
-file = Import('../data/cho.txt', "TAB")
-number_of_clusters = 5
-file0 = file.data
-gene_id = file0[:,0]
-final = len(gene_id)
-gene_ids = np.ravel(gene_id)
-cluster = []
-for i in range(len(gene_ids)):
-    cluster.append([int(file0[i][0])-1])
-#print(clusters)
-
-
 
 def eucli_dis(data):
     distance_matrix = euclidean_distances(data, data)
@@ -115,9 +102,21 @@ def plotPCA(pcaComponents, labels):
     plt.title('Principal component analysis plot on Cho.txt with 5 clusters')
     plt.legend()
     plt.show()
-    plot.savefig('../Plots/HAC_CHO_PCA.png')
+    #plot.savefig('../Plots/HAC_CHO_PCA.png')
 
 def main():
+    sys.setrecursionlimit(1500)
+    file = Import('../data/cho.txt', "TAB")
+    number_of_clusters = 5
+    file0 = file.data
+    gene_id = file0[:, 0]
+    final = len(gene_id)
+    gene_ids = np.ravel(gene_id)
+    global cluster
+    cluster = []
+    for i in range(len(gene_ids)):
+        cluster.append([int(file0[i][0]) - 1])
+    # print(clusters)
     ground_truth_label = file0[:,1]
     gene_data = file0[:,2:]
     rows, columns = gene_data.shape
