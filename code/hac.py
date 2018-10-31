@@ -121,8 +121,8 @@ def plotPCA(pcaComponents, labels):
 
 def main():
     sys.setrecursionlimit(1500)
-    file = Import('../data/iyer.txt', "TAB")
-    number_of_clusters = 10
+    file = Import('../data/new_dataset_2.txt', "TAB")
+    number_of_clusters = 3
     file0 = file.data
     gene_id = file0[:, 0]
     final = len(gene_id)

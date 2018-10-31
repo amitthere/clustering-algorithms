@@ -130,7 +130,7 @@ def expandCluster(pt1, neighbours, clusterid, cluster):
     return
 
 def main():
-    file = Import('../data/iyer.txt', "TAB")
+    file = Import('../data/new_dataset_1.txt', "TAB")
     data = file.data
     global gene_data
     gene_data = data[:,2:]
@@ -138,9 +138,9 @@ def main():
     global rows
     rows, columns = gene_data.shape
     global eps
-    eps = 1.13
+    eps = 1.2
     global minPts
-    minPts = 2
+    minPts = 3
     global disMat
     disMat = eucli_dis(gene_data)
     cluster = dbscan(gene_data, rows, disMat)
@@ -151,8 +151,8 @@ def main():
             lbl.append(item)
     #print(lbl)
     principal_component_analysis(gene_data, cluster)
-    rand = ExternalIndex(ground_truth_label, list)
-    jaccard = ExternalIndex(ground_truth_label, list)
+    rand = ExternalIndex(ground_truth_label, cluster)
+    jaccard = ExternalIndex(ground_truth_label, cluster)
     print('Rand index= ', rand.rand_index())
     print('Jaccard coefficient= ', jaccard.jaccard_coefficient())
 
