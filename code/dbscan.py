@@ -1,10 +1,8 @@
 import numpy as np
-from numpy import *
-from sklearn.metrics.pairwise import euclidean_distances
-import sys
 from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
 import seaborn as sb
+import matplotlib.pyplot as plt
+from sklearn.metrics.pairwise import euclidean_distances
 
 class Import:
     """
@@ -21,6 +19,7 @@ class Import:
 
     def import_tab_file(self, tabfile):
         self.data = np.genfromtxt(tabfile, dtype = float, delimiter = '\t')
+
 
 class ExternalIndex:
 
@@ -69,43 +68,6 @@ def eucli_dis(data):
     distance_matrix = euclidean_distances(data, data)
     return distance_matrix
 
-def min_value(dis_r, dis_c, disMat, number_of_clusters):
-    min = sys.maxsize
-    x = -1
-    y = -1
-    for i in range(0,disMat.shape[0]):
-        for j in range(0, disMat.shape[0]):
-            if i !=j and min > disMat[i][j]:
-                min = disMat[i][j]
-                x = i
-                y = j
-    #print(min)
-    #print(x, y)
-    cluster[x].extend(cluster[y])
-    del cluster[y]
-    #print(cluster)
-    clusters(disMat, dis_r, dis_c, x, y, number_of_clusters)
-
-def clusters(disMat, dis_r, dis_c, x, y, number_of_clusters):
-    for i in range(0,disMat.shape[0]):
-        if x == i or y == i:
-            continue
-        if disMat[i][x] > disMat[i][y]:
-            disMat[i][x] = disMat[i][y]
-        if disMat[x][i] > disMat[y][i]:
-            disMat[x][i] = disMat[y][i]
-    disMat = np.delete(disMat, y, 0)
-    disMat = np.delete(disMat, y, 1)
-    if(disMat.shape != (number_of_clusters, number_of_clusters)):
-        min_value(dis_r=dis_r, dis_c=dis_c, disMat=disMat, number_of_clusters=number_of_clusters)
-    else:
-        print("Distance Matrix")
-        print(disMat)
-
-def principal_component_analysis(data, labels):
-    pca_data = PCA(n_components=2).fit_transform(data)
-    plotPCA(pca_data, labels)
-
 def plotPCA(pcaComponents, labels):
     x = pcaComponents[:, 0]
     y = pcaComponents[:, 1]
@@ -114,45 +76,85 @@ def plotPCA(pcaComponents, labels):
     plot = scatter.get_figure()
     plt.xlabel('Component 1')
     plt.ylabel('Component 2')
-    plt.title('Principal component analysis plot on Cho.txt with 10 clusters')
+    plt.title('Principal component analysis plot on Iyer.txt with Epsilon = 1.13 and minPts = 3')
     plt.legend()
     plt.show()
-    #plot.savefig('../Plots/HAC_CHO_PCA.png')
+    plot.savefig('../Plots/DBSCAN_IYER_PCA.png')
+
+def principal_component_analysis(data, labels):
+    pca_data = PCA(n_components=2).fit_transform(data)
+    plotPCA(pca_data, labels)
+
+def dbscan(gene_data, rows, disMat):
+    cluster = np.zeros(rows)
+    clusterid = 0
+    for pt1 in range(rows):
+        if cluster[pt1] != 0:
+            continue
+        neighbours = regionQuery(gene_data, pt1, rows, disMat)
+        if len(neighbours) < minPts:
+            cluster[pt1] = -1
+            continue
+        clusterid = clusterid + 1
+        expandCluster(pt1, neighbours, clusterid, cluster)
+        unique, counts = np.unique(cluster, return_counts=True)
+        unique = [int(i) for i in unique]
+        #print("Cluster: count = ", str(dict(zip(unique, counts))))
+        centroids = {}
+        for k in range(int(np.min(cluster)), int(np.max(cluster))):
+            if k == 0:
+                continue
+            centroids[k] = np.asarray(np.where(cluster == k)) + 1
+        #print("Cluster: points in cluster = ")
+        #for key, value in centroids.items():
+            #print(str(key), str(value))
+    return cluster
+
+def regionQuery(gene_data, pt1, rows, disMat):
+    neighbors = []
+    for pt2 in range(rows):
+        if disMat[pt2][pt1] < eps:
+            neighbors.append(pt2)
+    return neighbors
+
+def expandCluster(pt1, neighbours, clusterid, cluster):
+    cluster[pt1] = clusterid
+    for i in neighbours:
+        if cluster[i] == -1:
+            cluster[i] = clusterid
+        if cluster[i] == 0:
+            cluster[i] = clusterid
+            neighbor1 = regionQuery(gene_data, i, rows, disMat)
+            if len(neighbor1) >= minPts:
+                neighbours += neighbor1
+    return
 
 def main():
-    sys.setrecursionlimit(1500)
-    file = Import('../data/new_dataset_2.txt', "TAB")
-    number_of_clusters = 3
-    file0 = file.data
-    gene_id = file0[:, 0]
-    final = len(gene_id)
-    gene_ids = np.ravel(gene_id)
-    global cluster
-    cluster = []
-    for i in range(len(gene_ids)):
-        cluster.append([int(file0[i][0]) - 1])
-    # print(clusters)
-    ground_truth_label = file0[:,1]
-    gene_data = file0[:,2:]
+    file = Import('../data/new_dataset_1.txt', "TAB")
+    data = file.data
+    global gene_data
+    gene_data = data[:,2:]
+    ground_truth_label = data[:,1]
+    global rows
     rows, columns = gene_data.shape
-    #print(gene_data.shape)
+    global eps
+    eps = 1.2
+    global minPts
+    minPts = 3
+    global disMat
     disMat = eucli_dis(gene_data)
-    #print(disMat.shape)
-    dis_r, dis_c = disMat.shape
-    min_value(dis_r, dis_c, disMat, number_of_clusters)
-    print(cluster)
-    list = np.zeros(len(gene_id), dtype=int)
-    for i in range(len(cluster)):
-        for j in cluster[i]:
-            list[j] = i
-    #print(list)
-    length = len(list)
-    #print(length)
-    rand = ExternalIndex(ground_truth_label, list)
-    jaccard = ExternalIndex(ground_truth_label, list)
+    cluster = dbscan(gene_data, rows, disMat)
+    #print(cluster)
+    lbl = []
+    for item in cluster:
+        if item not in lbl:
+            lbl.append(item)
+    #print(lbl)
+    principal_component_analysis(gene_data, cluster)
+    rand = ExternalIndex(ground_truth_label, cluster)
+    jaccard = ExternalIndex(ground_truth_label, cluster)
     print('Rand index= ', rand.rand_index())
     print('Jaccard coefficient= ', jaccard.jaccard_coefficient())
-    principal_component_analysis(gene_data, list)
 
 if __name__ == "__main__":
     main()
