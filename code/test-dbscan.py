@@ -1,5 +1,5 @@
 import numpy as np
-from dbscan import DBSCAN
+from densitybasedclustering.dbscan import DBSCAN
 from visualization import Visualization
 from clustervalidation import ExternalIndex
 

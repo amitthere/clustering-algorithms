@@ -1,5 +1,5 @@
 import numpy as np
-from HierarchicalClustering import HierarchicalAgglomerativeClustering
+from hierarchicalclustering.hac import HierarchicalAgglomerativeClustering
 from visualization import Visualization
 from clustervalidation import ExternalIndex
 
