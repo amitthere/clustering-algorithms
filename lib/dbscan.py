@@ -1,78 +1,29 @@
 import numpy as np
-from sklearn.decomposition import PCA
 import seaborn as sb
 import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from clustervalidation import ExternalIndex
 from sklearn.metrics.pairwise import euclidean_distances
 
-class Import:
+
+class DBSCAN:
     """
-    Imports data from various sources.
-    Currently, just tab-delimited files are supported
+    Density-Based Spatial Clustering of Applications with Noise (DBSCAN)
     """
 
-    def __init__(self, file, ftype):
-        self.data = None
-        self.prefixed_data = None
-        self.file = file
-        if ftype == "TAB":
-            self.import_tab_file(self.file)
-
-    def import_tab_file(self, tabfile):
-        self.data = np.genfromtxt(tabfile, dtype = float, delimiter = '\t')
-
-
-class ExternalIndex:
-
-    def __init__(self, groundtruth, clusters):
-        self.ground = groundtruth
-        self.clusters = clusters
-        self.ground_incidence_matrix = self.incidence_matrix(self.ground)
-        self.cluster_incidence_matrix = self.incidence_matrix(self.clusters)
-        self.M11, self.M00, self.M10, self.M01 \
-            = self.categories(self.ground_incidence_matrix, self.cluster_incidence_matrix)
-
-    def incidence_matrix(self, clusters):
-        N = clusters.shape[0]
-        matrix = np.zeros((N, N), dtype='int')
-
-        for i in range(clusters.shape[0]):
-            for j in range(i + 1, clusters.shape[0]):
-                if (clusters[i] == clusters[j]) and (clusters[i] != -1 or clusters[j] != -1):
-                    matrix[i][j] = matrix[j][i] = 1
-        return matrix
-
-    def categories(self, ground_incidence_matrix, cluster_incidence_matrix):
-        M11 = M00 = M10 = M01 = 0
-        for i in range(cluster_incidence_matrix.shape[0]):
-            for j in range(cluster_incidence_matrix.shape[0]):
-                if cluster_incidence_matrix[i][j] == ground_incidence_matrix[i][j] == 1:
-                    M11 = M11 + 1
-                elif cluster_incidence_matrix[i][j] == ground_incidence_matrix[i][j] == 0:
-                    M00 = M00 + 1
-                elif cluster_incidence_matrix[i][j] == 1 and ground_incidence_matrix[i][j] == 0:
-                    M10 = M10 + 1
-                elif cluster_incidence_matrix[i][j] == 0 and ground_incidence_matrix[i][j] == 1:
-                    M01 = M01 + 1
-        return M11, M00, M10, M01
-
-    def rand_index(self):
-        rand_index = float(self.M11 + self.M00)/float(self.M11 + self.M00 + self.M10 + self.M01)
-        return rand_index
-
-    def jaccard_coefficient(self):
-        jaccard_coefficient = float(self.M11) / float(self.M11 + self.M10 + self.M01)
-        return jaccard_coefficient
-
+    def __init__(self):
+        pass
 
 def eucli_dis(data):
     distance_matrix = euclidean_distances(data, data)
     return distance_matrix
 
+
 def plotPCA(pcaComponents, labels):
     x = pcaComponents[:, 0]
     y = pcaComponents[:, 1]
     fig = plt.figure()
-    scatter = sb.scatterplot(x, y, hue = labels)
+    scatter = sb.scatterplot(x, y, hue=labels)
     plot = scatter.get_figure()
     plt.xlabel('Component 1')
     plt.ylabel('Component 2')
@@ -81,9 +32,11 @@ def plotPCA(pcaComponents, labels):
     plt.show()
     plot.savefig('../Plots/DBSCAN_IYER_PCA.png')
 
+
 def principal_component_analysis(data, labels):
     pca_data = PCA(n_components=2).fit_transform(data)
     plotPCA(pca_data, labels)
+
 
 def dbscan(gene_data, rows, disMat):
     cluster = np.zeros(rows)
@@ -110,12 +63,14 @@ def dbscan(gene_data, rows, disMat):
             #print(str(key), str(value))
     return cluster
 
+
 def regionQuery(gene_data, pt1, rows, disMat):
     neighbors = []
     for pt2 in range(rows):
         if disMat[pt2][pt1] < eps:
             neighbors.append(pt2)
     return neighbors
+
 
 def expandCluster(pt1, neighbours, clusterid, cluster):
     cluster[pt1] = clusterid
@@ -129,8 +84,9 @@ def expandCluster(pt1, neighbours, clusterid, cluster):
                 neighbours += neighbor1
     return
 
+
 def main():
-    file = Import('../data/new_dataset_1.txt', "TAB")
+    file = np.genfromtxt(r'../data/new_dataset_1.txt', dtype=float, delimiter='\t')
     data = file.data
     global gene_data
     gene_data = data[:,2:]
@@ -155,6 +111,7 @@ def main():
     jaccard = ExternalIndex(ground_truth_label, cluster)
     print('Rand index= ', rand.rand_index())
     print('Jaccard coefficient= ', jaccard.jaccard_coefficient())
+
 
 if __name__ == "__main__":
     main()

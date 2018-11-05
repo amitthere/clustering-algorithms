@@ -1,26 +1,10 @@
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
-from clustervalidation import ExternalIndex, Visualization
+from lib.clustervalidation import ExternalIndex, Visualization
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import time
-
-class Import:
-    """
-    Imports data from various sources.
-    Currently, just tab-delimited files are supported
-    """
-
-    def __init__(self, file, ftype):
-        self.data = None
-        self.prefixed_data = None
-        self.file = file
-        if ftype == "TAB":
-            self.import_tab_file(self.file)
-
-    def import_tab_file(self, tabfile):
-        self.data = np.genfromtxt(tabfile, dtype=float, delimiter='\t')
 
 
 class Kmeans:
@@ -142,42 +126,3 @@ class Kmeans:
         plt.savefig(r'../log/k-means-iteration-'+str(time.time())+'.jpg')
         plt.close()
         return
-
-def main():
-    dataset1 = Import(r'../data/new_dataset_1.txt', 'TAB')
-    dataset2 = Import(r'../data/cho.txt', 'TAB')
-
-    km1 = Kmeans(dataset1.data[:, 2:], dataset1.data[:, 1], 3)
-    km2 = Kmeans(dataset2.data[:, 2:], dataset2.data[:, 1], 10)
-
-    ic1 = km1.initial_centroids(3, 5, 9)
-    #ic1 = km1.initial_random_centroids(5)
-    ic2 = km2.initial_random_centroids(5)
-    # km1.centroids = km1.init_centroids = np.loadtxt(r'../log/cho_ground_centroids.txt')
-
-    # specify iteration as parameter here
-    km1.kmeans_algorithm()
-    km2.kmeans_algorithm()
-
-    extr_index_validation1 = ExternalIndex(km1.ground_truth_clusters, km1.clusters)
-    extr_index_validation2 = ExternalIndex(km2.ground_truth_clusters, km2.clusters)
-
-    print('Rand Index of dataset1 clusters :', extr_index_validation1.rand_index())
-    print('Jaccard Coefficient of dataset1 clusters :', extr_index_validation1.jaccard_coefficient())
-
-    print('Rand Index of dataset2 clusters :', extr_index_validation2.rand_index())
-    print('Jaccard Coefficient of dataset2 dataset clusters :', extr_index_validation2.jaccard_coefficient())
-
-    plot1 = Visualization(dataset1.data[:, 2:], km1.clusters, dataset1.data[:, 1])
-    plot2 = Visualization(dataset2.data[:, 2:], km2.clusters, dataset2.data[:, 1])
-    plot1.plot(r'../log/td1.jpg')
-    plot2.plot(r'../log/cho2.jpg')
-
-    # gene_cluster_matched = km1.cluster_validation()
-    # print('Genes that matched in clusters: ', gene_cluster_matched)
-
-    return
-
-
-if __name__ == "__main__":
-    main()

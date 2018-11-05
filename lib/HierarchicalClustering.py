@@ -65,6 +65,10 @@ class ExternalIndex:
         return jaccard_coefficient
 
 
+class HierarchicalAgglomerativeClustering:
+    pass
+
+
 def eucli_dis(data):
     distance_matrix = euclidean_distances(data, data)
     return distance_matrix
